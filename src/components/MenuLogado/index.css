@@ -1,0 +1,20 @@
+#tituloSistema {
+  font-size: 1.75rem !important;
+  font-weight: bold !important;
+}
+
+.nomeUsuarioLogado {
+  font-weight: normal;
+  font-size: 1.0rem;
+  display: block;
+}
+
+.linkMenu {
+  margin-bottom: 40px;
+  font-size: 20px;
+  text-decoration: none;
+}
+
+.linkMenu:hover {
+  text-decoration: underline;
+}
