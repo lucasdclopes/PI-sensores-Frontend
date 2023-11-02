@@ -2,7 +2,7 @@ import './App.css';
 import React, { Component } from 'react';
 
 import MenuLogado from "./components/MenuLogado";
-import Pib from "./components/TempoReal";
+import TempoReal from "./components/TempoReal";
 
 export default class AreaDoUsuario extends Component {
 

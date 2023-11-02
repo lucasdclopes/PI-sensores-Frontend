@@ -11,7 +11,7 @@ import App from './App';
 
 import reportWebVitals from './reportWebVitals';
 
-import Pib from './components/TempoReal';
+import TempoReal from './components/TempoReal';
 import Co2 from './components/Co2';
 import PibxCo2 from './components/PibxCo2';
 

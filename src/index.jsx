@@ -1,6 +1,6 @@
 import { Component } from "react";
 import MenuLogado from "../MenuLogado";
-import Pib from "../Pib";
+import TempoReal from "../TempoReal";
 
 export default class AreaDoUsuario extends Component {
 
@@ -13,7 +13,7 @@ export default class AreaDoUsuario extends Component {
     return (
       <div>
         <MenuLogado/>
-        <Pib/>
+        <TempoReal/>
       </div>
     );
   }

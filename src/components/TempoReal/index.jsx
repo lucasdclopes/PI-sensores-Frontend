@@ -1,102 +1,117 @@
 import { Component } from "react";
-import { Container, Table, Row, Col, InputGroup, FormControl, Form, Card } from 'react-bootstrap';
+import { Container, Table, Row, Col } from 'react-bootstrap';
 import './index.css';
 import HttpService from '../../services/HttpService';
 import HttpServiceHandler from '../../services/HttpServiceHandler';
+import DateHelper from "../../helpers/DateHelper";
 import RgbHelper from "../../helpers/RgbHelper";
 import ErroModal from '../ErroModal';
 import Button from 'react-bootstrap/Button';
 import MenuLogado from '../MenuLogado';
-import Paginacao from '../Paginacao';
 import { Modal } from 'react-bootstrap';
+import React from "react";
 
-import { default as ReactSelect } from "react-select";
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, LineElement, PointElement, LinearScale, Title, CategoryScale, Legend } from 'chart.js';
-import { components } from "react-select";
-
-
-ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Legend, Title);
+import ReactApexChart from 'react-apexcharts'
+import ApexCharts from "apexcharts";
 
 
-export const options = {
-  responsive: true,
-  interaction: {
-    mode: 'index',
-    intersect: false,
+const TEMPO_REFRESH = 1000;
+const LIMITE_TABELA = 15;
+const CONFIG_CHART = {
+  chart: {
+    id: 'realtime',
+    height: 350,
+    type: 'line',
+    animations: {
+      enabled: true,
+      easing: 'linear',
+      dynamicAnimation: {
+        speed: TEMPO_REFRESH
+      }
+    },
+    toolbar: {
+      show: false
+    },
+    zoom: {
+      enabled: false
+    }
   },
-  stacked: false,
-  scales: {
-    yPib: {
-      type: 'linear',
-      display: true,
-      position: 'left',
-      title: {
-        display: true,
-        text: 'PIB'
-      },
-    },
-    yPibPerCapita: {
-      type: 'linear',
-      display: true,
-      position: 'right',
-      title: {
-        display: true,
-        text: 'PIB Per Capita'
-      },
-      // grid line settings
-      grid: {
-        drawOnChartArea: false, // only want the grid lines for one axis to show up
-      },
-    },
+  colors: ['#E91E63', '#008FFB'],
+  dataLabels: {
+    enabled: false
   },
-  plugins: {
-    legend: {
-      position: 'top',
-    },
-    title: {
-      display: true,
-      text: 'Dados de PIB',
-    },
+  stroke: {
+    curve: 'smooth'
   },
-};
+  title: {
+    text: 'Monitoramento em tempo real',
+    align: 'left'
+  },
+  markers: {
+    size: 0
+  },
+  xaxis: {
+    type: 'datetime',
+    range: TEMPO_REFRESH * 8 
+  },
+  yaxis: {
+    max: calcularMaxY,
+    min: calcularMinY
+  },
+  stroke:{
+    curve: 'stepline',
+  },
+  legend: {
+    position: 'top',
+    horizontalAlign: 'right',
+    floating: true,
+    offsetY: -25,
+    offsetX: -5
+  }
+}
 
-const Option = (props) => {
-  return (
-    <div>
-      <components.Option {...props}>
-        <input
-          type="checkbox"
-          checked={props.isSelected}
-          onChange={() => null}
-        />{" "}
-        <label>{props.label}</label>
-      </components.Option>
-    </div>
-  );
-};
+function calcularMinY(min) {
+  const min_padrao = 15;
+  let minNovo = min_padrao;
+  while (min - 5 < minNovo){
+    minNovo -= 10;
+  }
+  return minNovo;
+}
 
-const styles = {
-  container: base => ({
-    ...base,
-    flex: 1
-  })
-};
-
-const default_itens_pagina = 30;
-
+function calcularMaxY(max) {
+  const max_padrao = 50;
+  let maxNovo = max_padrao;
+  while (max + 5 > maxNovo){
+    maxNovo += 10;
+  }
+  return maxNovo;
+}
 
 export default class TempoReal extends Component{
+
 
   constructor(props){
     super(props);
 
+   
     this.state = {
-      data: null,
-      dadosGrafico: [],
+      series: [
+        {
+          name: "Temperatura (°C)",
+          data: new Array() 
+        }, 
+        {
+          name: "Umidade relativa do ar (%)",
+          data: new Array()
+        }
+      ],
+      options: CONFIG_CHART,
+
+      dadosTabela: [],
       filtros : {
         paginacaoRequest : {
-          size: 20,
+          size: 1,
           page: 1
         },
       },
@@ -122,165 +137,92 @@ export default class TempoReal extends Component{
       });
     }
 
-    this.closeSucessoModal = () => {
-      if (this.state.sucessoModal.redirect) {
-        window.location = this.state.sucessoModal.redirect;
-      }
-
-      this.setState({
-        sucessoModal : {
-          mensagem : '',
-          show : false
-        }
-      });
+    this.checkGerarGrafico = (dadosGrafico) => {
+      return Array.isArray(dadosGrafico) && dadosGrafico.length  > 0;
     }
 
     this.obterLista = () => {
       console.log('obterLista');
-      HttpService.listarMedicoes(this.state.filtros)
-      .then((response) => {
-        if (response){
-
-          let datasets = []
-          let labels = []
-          let responseApi = response.data;
-          let cor = RgbHelper.getRandomColor();
-          console.log('response.data',response.data);
-          //response.data.forEach((el) => {
-
-            console.log('el',el);
-            let corAnterior = cor;
-            cor = RgbHelper.getRandomColor();
-            if (corAnterior == cor)
-              cor = RgbHelper.getRandomColor();
-            
-            //console.log('dadosPais',dadosPais);
-            //if (labels.length == 0)
-            labels = response.data.map((dt) => dt.dtMedicao);
-
-            let dadosDataset = {
-              label: 'Temp',
-              backgroundColor: cor,
-              borderColor: cor,
-              data: response.data.map((temp) => temp.vlTemperatura),
-              yAxisID: 'yPib'
-            };
-            datasets.push(dadosDataset);
-
-            dadosDataset = {
-              label: 'Umid',
-              backgroundColor: cor,
-              borderColor: cor,
-              borderDash: [5, 5],
-              data: response.data.map((umid) => umid.vlUmidade),
-              yAxisID: 'yPibPerCapita'
-              }; 
-            datasets.push(dadosDataset);
-          this.setState(prevState => ({
-            ...prevState,
-            data : {
-              //labels: respostaComNomePaises.map((el) => el.Ano),
-              labels: labels,
-              /*
-              datasets: [
-                {
-                  label: 'PIB',
-                  backgroundColor: 'rgba(194, 116, 161, 0.5)',
-                  borderColor: 'rgb(194, 116, 161)',
-                  data: respostaComNomePaises.map((el) => el.pibTotal),
-                  yAxisID: 'yPib',
-                },
-                {
-                  label: 'PIB Per Capita',
-                  backgroundColor: 'rgba(71, 225, 167, 0.5)',
-                  borderColor: 'rgb(71, 225, 167)',
-                  data: respostaComNomePaises.map((el) => el.pibPerCapita),
-                  yAxisID: 'yPibPerCapita',
-    
-                },
-              ]*/
-              datasets: datasets
-            },
-            dadosGrafico : responseApi,
-            filtros : {
-              ...prevState.filtros
-            }
-          }));
+      console.log(this.state.series);
+      let filtros = this.state.filtros;
+      if (this.state.dadosTabela.length < 1){
+        filtros = {
+          paginacaoRequest : {
+            size: LIMITE_TABELA,
+            page: 1
+          },
         }
+      }
+
+      HttpService.listarMedicoes(filtros)
+      .then((response) => {
+        if (!response){
+          return;
+        }
+        let responseData = response.data;
+        //evitar IDs repetidos (o gráfico atualizou mais rápido que o servidor recebeu dados)
+        if (this.state.dadosTabela.filter((tabela) => tabela.idMedicao == responseData[0].idMedicao).length > 0) {
+          return;
+        }
+
+        if (responseData.length > 1) //a ordem do servidor é diferente da necessária pro gráfico
+          responseData.reverse();
+
+
+        let series = this.state.series.slice();
+        let seriesTemp = series[0].data;
+        let seriesUmidade = series[1].data;
+        let dadosTabela = [...responseData,...this.state.dadosTabela];
+        
+        if (dadosTabela.length > LIMITE_TABELA){
+          dadosTabela.pop(); 
+        }
+        if (seriesTemp.length > 1000) {
+          console.log('limpando');
+            series = [{
+              data: seriesTemp.slice(seriesTemp.length - 20, seriesTemp.length)
+            },{
+              data: seriesUmidade.slice(seriesUmidade.length - 20, seriesUmidade.length)
+            }]       
+        } 
+
+        for (let i = 0; i < responseData.length; i++) {
+          console.log(i);
+          let dataItemTemp = {
+            x : DateHelper.stringIsoParaJs(responseData[i].dtMedicao),
+            y : response.data[i].vlTemperatura
+          }
+
+          let dataItemUmidade = {
+            x : DateHelper.stringIsoParaJs(responseData[i].dtMedicao),
+            y : response.data[i].vlUmidade
+          }
+          seriesTemp.push(dataItemTemp);
+          seriesUmidade.push(dataItemUmidade);
+        }
+
+        ApexCharts.exec('realtime', 'updateSeries', [{   
+          data: seriesTemp  
+        },{
+          data: seriesUmidade
+        }]);
+
+        this.setState(prevState => ({
+          ...prevState,
+          series : series,
+          dadosTabela : dadosTabela,
+          filtros : {
+            ...prevState.filtros
+          }
+        }));
+        
       })
       .catch((error) => {
+        console.log(error);
         let httpServiceHandler = new HttpServiceHandler();
         httpServiceHandler.validarExceptionHTTP(error.response,this);
       })
       //this.limparFiltros();
-    }
-
-
-    this.checkGerarGrafico = (booleana) => {
-      return booleana;
-    }
-
-    this.handleChangeCheckedSelect = (e) => {
-      console.log(e);
-      console.log('idPaises',this.state.filtros.idPaises);
-      this.setState(prevState => ({
-        ...prevState,
-        paisesSelecionados : e
-      }));
-    }
-
-    this.handleChange = (e) => {
-      
-      console.log(e.target.type);
-      console.log(e.target.value);
-      console.log('e.target.name ' + e.target.name);
-
-      const name = e.target.name;
-      const value =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
-      this.setState(prevState => ({
-        ...prevState,
-        [name]: value
-      }));
-    }
-
-    this.handleChangeNumerico = (e) => {
-
-      const re = /^[0-9\b]+$/;
-      if (e.target.value === '' || re.test(e.target.value)) {
-        console.log('noif');
-        const name = e.target.name;
-        const value =
-        e.target.type === "checkbox" ? e.target.checked : e.target.value;
-        this.setState({ 
-          [name]: value 
-        });
-      } 
-    }
-
-  
-    this.limparFiltros = (e) => {
-      console.log('limpando filtros');
-      this.setState(prevState => ({
-        ...prevState,
-        filtros : {
-          ...prevState.filtros,
-          idPaises: [],
-          minAno: null,
-          maxAno: null
-          }
-        }
-      ));
-    }
-
-    this.limparDados = (e) => {
-      console.log('limpando dados');
-      this.setState(prevState => ({
-        ...prevState,
-        dadosGrafico:[]
-      }  
-      )
-      );
     }
 
   }
@@ -292,7 +234,7 @@ export default class TempoReal extends Component{
     return (
       <div>
 
-        <Container className="containerListaAlunosTurma" fluid>
+        <Container className="containerTempoReawl" fluid>
 
           <Row>
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 10, offset: 1}} lg={{span: 10, offset: 1}}>
@@ -305,22 +247,17 @@ export default class TempoReal extends Component{
               <h3 className="Aluno">Dados</h3>
             </Col>
           </Row>
-
-          <Col style={{marginTop : "60px"}} xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-
-          </Col>
-
+          
           {
-          (this.checkGerarGrafico(true)) &&
-          <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-          <Line 
-            data={this.state.data} options={options} />
-            </Col>
-        }
+          (this.checkGerarGrafico(this.state.series[0].data)) &&
+          <Col style={{marginTop : "60px"}} xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
+          <ReactApexChart options={this.state.options} series={this.state.series} type="line" height={350} />
+          </Col>
+          }
 
           <Row style={{marginTop : "60px"}}>
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-              <h4>Dados de PIB Cadastrados </h4>
+              <h4>Dados recentes de medições </h4>
               <Table responsive="sm" striped bordered hover>
                 <thead>
                   <tr>
@@ -332,7 +269,7 @@ export default class TempoReal extends Component{
 
                 <tbody>
                 {
-                    this.state.dadosGrafico.map((dado) => {
+                    this.state.dadosTabela.map((dado) => {
                     return (
                         
                       <tr key={dado.idMedicao}>
@@ -361,16 +298,17 @@ export default class TempoReal extends Component{
               </Modal>
             
             <ErroModal closeErroModal={this.closeErroModal} erroModal={this.state.erroModal}/>
-            <Paginacao there={this} />
           </Container>
       </div>
     )
   }
 
   componentDidMount() {
-      
     this.obterLista();
-    
+    window.setInterval(() => {
+      this.obterLista();
+      
+    }, TEMPO_REFRESH)
   }
 
 
