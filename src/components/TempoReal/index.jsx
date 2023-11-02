@@ -15,24 +15,28 @@ import ReactApexChart from 'react-apexcharts'
 import ApexCharts from "apexcharts";
 
 
-const TEMPO_REFRESH = 1000;
+const TEMPO_REFRESH = 2000;
 const LIMITE_TABELA = 15;
 
-const Y_MIN_PADRAO = 20;
-const Y_MAX_PADRAO = 50;
+const Y_MIN_PADRAO = 24;
+const Y_MAX_PADRAO = 40;
 
 function calcularMinY(min) {
+  console.log('min ' + min);
+
   let minNovo = Y_MIN_PADRAO;
   while (min - 5 < minNovo){
-    minNovo -= 10;
+    minNovo -= 2;
   }
   return minNovo;
 }
 
 function calcularMaxY(max) {
+  console.log('max ' + max);
+
   let maxNovo = Y_MAX_PADRAO;
   while (max + 5 > maxNovo){
-    maxNovo += 10;
+    maxNovo += 2;
   }
   return maxNovo;
 }
@@ -48,10 +52,12 @@ export default class TempoReal extends Component{
       bla: true,
       series: [
         {
+          type: 'area',
           name: "Temperatura (°C)",
           data: new Array() 
         }, 
         {
+          type: 'line',
           name: "Umidade relativa do ar (%)",
           data: new Array()
         }
@@ -59,8 +65,8 @@ export default class TempoReal extends Component{
       options: { 
         chart: {
           id: 'realtime',
-          height: 350,
-          type: 'line',
+          height: 600,
+          type: 'area',
           animations: {
             enabled: true,
             easing: 'linear',
@@ -76,6 +82,15 @@ export default class TempoReal extends Component{
           }
         },
         colors: ['#E91E63', '#008FFB'],
+        fill: {
+          type: "gradient",
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.7,
+            opacityTo: 0.9,
+            stops: [0, 90, 100]
+          }
+        },
         dataLabels: {
           enabled: false
         },
@@ -99,6 +114,7 @@ export default class TempoReal extends Component{
         },
         stroke:{
           curve: 'stepline',
+          //curve: 'smooth',
         },
         legend: {
           position: 'top',
@@ -257,7 +273,7 @@ export default class TempoReal extends Component{
           {
           (this.checkGerarGrafico(this.state.series[0].data)) &&
           <Col style={{marginTop : "60px"}} xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-          <ReactApexChart options={this.state.options} series={this.state.series} type="line" height={350} />
+          <ReactApexChart options={this.state.options} series={this.state.series} type="line" height={600} />
           </Col>
           }
 
