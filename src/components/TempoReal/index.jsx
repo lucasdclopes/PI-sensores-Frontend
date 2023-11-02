@@ -17,62 +17,12 @@ import ApexCharts from "apexcharts";
 
 const TEMPO_REFRESH = 1000;
 const LIMITE_TABELA = 15;
-const CONFIG_CHART = {
-  chart: {
-    id: 'realtime',
-    height: 350,
-    type: 'line',
-    animations: {
-      enabled: true,
-      easing: 'linear',
-      dynamicAnimation: {
-        speed: TEMPO_REFRESH
-      }
-    },
-    toolbar: {
-      show: false
-    },
-    zoom: {
-      enabled: false
-    }
-  },
-  colors: ['#E91E63', '#008FFB'],
-  dataLabels: {
-    enabled: false
-  },
-  stroke: {
-    curve: 'smooth'
-  },
-  title: {
-    text: 'Monitoramento em tempo real',
-    align: 'left'
-  },
-  markers: {
-    size: 0
-  },
-  xaxis: {
-    type: 'datetime',
-    range: TEMPO_REFRESH * 8 
-  },
-  yaxis: {
-    max: calcularMaxY,
-    min: calcularMinY
-  },
-  stroke:{
-    curve: 'stepline',
-  },
-  legend: {
-    position: 'top',
-    horizontalAlign: 'right',
-    floating: true,
-    offsetY: -25,
-    offsetX: -5
-  }
-}
+
+const Y_MIN_PADRAO = 20;
+const Y_MAX_PADRAO = 50;
 
 function calcularMinY(min) {
-  const min_padrao = 15;
-  let minNovo = min_padrao;
+  let minNovo = Y_MIN_PADRAO;
   while (min - 5 < minNovo){
     minNovo -= 10;
   }
@@ -80,8 +30,7 @@ function calcularMinY(min) {
 }
 
 function calcularMaxY(max) {
-  const max_padrao = 50;
-  let maxNovo = max_padrao;
+  let maxNovo = Y_MAX_PADRAO;
   while (max + 5 > maxNovo){
     maxNovo += 10;
   }
@@ -96,6 +45,7 @@ export default class TempoReal extends Component{
 
    
     this.state = {
+      bla: true,
       series: [
         {
           name: "Temperatura (°C)",
@@ -106,7 +56,64 @@ export default class TempoReal extends Component{
           data: new Array()
         }
       ],
-      options: CONFIG_CHART,
+      options: { 
+        chart: {
+          id: 'realtime',
+          height: 350,
+          type: 'line',
+          animations: {
+            enabled: true,
+            easing: 'linear',
+            dynamicAnimation: {
+              speed: TEMPO_REFRESH
+            }
+          },
+          toolbar: {
+            show: false
+          },
+          zoom: {
+            enabled: false
+          }
+        },
+        colors: ['#E91E63', '#008FFB'],
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: 'smooth'
+        },
+        title: {
+          text: 'Monitoramento em tempo real',
+          align: 'left'
+        },
+        markers: {
+          size: 0
+        },
+        xaxis: {
+          type: 'datetime',
+          range: TEMPO_REFRESH * 8 
+        },
+        yaxis: {
+          max: calcularMaxY,
+          min: calcularMinY
+        },
+        stroke:{
+          curve: 'stepline',
+        },
+        legend: {
+          position: 'top',
+          horizontalAlign: 'right',
+          floating: true,
+          offsetY: -25,
+          offsetX: -5,
+          onItemHover: {
+            highlightDataSeries: false
+          },
+          onItemClick: {
+            toggleDataSeries: false
+        }
+        }
+      },
 
       dadosTabela: [],
       filtros : {
@@ -142,8 +149,8 @@ export default class TempoReal extends Component{
     }
 
     this.obterLista = () => {
-      console.log('obterLista');
-      console.log(this.state.series);
+      //console.log('obterLista');
+      console.log(this.state.bla);
       let filtros = this.state.filtros;
       if (this.state.dadosTabela.length < 1){
         filtros = {
@@ -187,7 +194,6 @@ export default class TempoReal extends Component{
         } 
 
         for (let i = 0; i < responseData.length; i++) {
-          console.log(i);
           let dataItemTemp = {
             x : DateHelper.stringIsoParaJs(responseData[i].dtMedicao),
             y : response.data[i].vlTemperatura
@@ -257,7 +263,7 @@ export default class TempoReal extends Component{
 
           <Row style={{marginTop : "60px"}}>
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-              <h4>Dados recentes de medições </h4>
+              <h4>Dados recentes mensurados </h4>
               <Table responsive="sm" striped bordered hover>
                 <thead>
                   <tr>
