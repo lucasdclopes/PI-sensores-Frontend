@@ -9,7 +9,7 @@ Este projeto é do PI-5 (Projeto Integrador) do curso de Engenheria de Computaç
 ## Requisitos
 
 Para executar este projeto você precisa também estar executando o backend deste sistema, que está localizado em 
-[https://github.com/lucasdclopes/PI-Analise-Dados](https://github.com/lucasdclopes/PI-sensores)
+https://github.com/lucasdclopes/PI-sensores
 
 Também é necessário instalar o node.js + npm. Os testes foram feitos na versão LTS 18.16.0, que inclui o npm 9.51
 https://nodejs.org/en/download
