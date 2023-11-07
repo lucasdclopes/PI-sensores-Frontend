@@ -2,8 +2,8 @@ import axios from 'axios';
 import UsuarioLogadoDto from '../../dto/UsuarioLogadoDto';
 
 const host = window.location.protocol + "//" + window.location.host;
-const urlBase = 'http://localhost:8080/PI-sensores/api'; //<- testes local
-//const urlBase = host + '/api'; //<- build acesso na rede
+const urlBase = 'http://192.168.0.143:8080/PI-sensores/api'; //<- testes local
+//const urlBase = host + '/PI-sensores/api'; //<- build acesso na rede
 const defaultHeaders = {
   headers : {
     "Content-Type": "application/json",
@@ -29,6 +29,7 @@ export default class HttpService{
 
   static listarMedicoes = async (filtros) => {
     console.log('filtros listarMedicoes',filtros);
+    console.log('urlBase',urlBase);
     let url = urlBase + '/medicao';
     let queryParams = [];
 

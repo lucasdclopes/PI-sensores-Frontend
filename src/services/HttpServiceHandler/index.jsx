@@ -5,15 +5,15 @@ export default class HttpServiceHandler  extends Component {
 
   constructor() {
     super();
-    this.validarExceptionHTTP = (response, origemErro) => {
-
+    this.validarExceptionHTTP = (error, origemErro) => {
+      let response = error.response;
       let mensagemErro = '';
 
       if (!response){
         origemErro.setState( prevState => ({
           erroModal : {
             ...prevState.erroModal,
-            mensagemErro : 'Não foi possível conectar ao servidor de dados, verifique sua conexão de rede e se o servidor foi inicializado.',
+            mensagemErro : 'Não foi possível conectar ao servidor de dados, verifique sua conexão de rede e se o servidor foi inicializado. (' + error.message + ')',
             show : true,
             titulo : 'Erro de Conexão'
           }

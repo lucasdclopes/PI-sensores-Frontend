@@ -242,7 +242,7 @@ export default class TempoReal extends Component{
       .catch((error) => {
         console.log(error);
         let httpServiceHandler = new HttpServiceHandler();
-        httpServiceHandler.validarExceptionHTTP(error.response,this);
+        httpServiceHandler.validarExceptionHTTP(error,this);
       })
       //this.limparFiltros();
     }
