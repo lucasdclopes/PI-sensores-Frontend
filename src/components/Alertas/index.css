@@ -1,0 +1,17 @@
+.containerListaAlunosTurma {
+  padding-top: 60px;
+}
+
+.btnSalvarTurma {
+  background-color:rgb(2, 114, 11);
+  margin-left: 20px;
+}
+
+.btnDeletarTurma {
+  margin-left: 20px;
+}
+
+.inputNovaTurma {
+  margin-bottom: 20px;
+}
+

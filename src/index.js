@@ -12,7 +12,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 import TempoReal from './components/TempoReal';
-import Co2 from './components/Co2';
+import Alertas from './components/Alertas';
 import PibxCo2 from './components/PibxCo2';
 
 
@@ -22,7 +22,7 @@ ReactDOM.render(
     <Routes>
       <Route path="/" element={<App />}></Route>
       <Route path="/tempo-real" element={<TempoReal />}></Route>
-      <Route path="/co2" element={<Co2 />}></Route>
+      <Route path="/alertas" element={<Alertas />}></Route>
       <Route path="/pib-x-co2" element={<PibxCo2 />}></Route>
     </Routes>
 

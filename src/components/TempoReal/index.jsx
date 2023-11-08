@@ -15,8 +15,8 @@ import ReactApexChart from 'react-apexcharts'
 import ApexCharts from "apexcharts";
 
 
-const TEMPO_REFRESH = 2000;
-const LIMITE_TABELA = 15;
+const TEMPO_REFRESH = 8000;
+const LIMITE_TABELA = 20;
 
 const Y_MIN_PADRAO = 24;
 const Y_MAX_PADRAO = 40;
@@ -106,7 +106,7 @@ export default class TempoReal extends Component{
         },
         xaxis: {
           type: 'datetime',
-          range: TEMPO_REFRESH * 8 
+          range: TEMPO_REFRESH * 10 
         },
         yaxis: {
           max: calcularMaxY,
