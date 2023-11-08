@@ -45,6 +45,10 @@ export default class HttpService{
     if (filtros.dtFinal) {
       queryParams.push('dtFinal=' + filtros.dtFinal);
     }
+    if (filtros.tempoReal) {
+      queryParams.push('tempoReal=' + filtros.tempoReal);
+    }
+    
 
     url += HttpService.gerarParams(queryParams);
 
@@ -102,4 +106,5 @@ export default class HttpService{
   static logar = (postData) => {
     return axios.post(urlBase + '/logar', postData,defaultHeaders);
   }
+
 }

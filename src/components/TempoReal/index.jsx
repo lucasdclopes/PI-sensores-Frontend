@@ -137,6 +137,7 @@ export default class TempoReal extends Component{
           size: 1,
           page: 1
         },
+        tempoReal : true
       },
       erroModal : {
         mensagemErro : '',
