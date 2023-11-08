@@ -2,7 +2,8 @@ import axios from 'axios';
 import UsuarioLogadoDto from '../../dto/UsuarioLogadoDto';
 
 const host = window.location.protocol + "//" + window.location.host;
-const urlBase = 'http://192.168.0.143:8080/PI-sensores/api'; //<- testes local
+//const urlBase = 'http://192.168.0.143:8080/PI-sensores/api'; //<- testes local
+const urlBase = 'http://localhost:8080/PI-sensores/api'; //<- testes local
 //const urlBase = host + '/PI-sensores/api'; //<- build acesso na rede
 const defaultHeaders = {
   headers : {

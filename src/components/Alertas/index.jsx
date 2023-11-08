@@ -13,11 +13,28 @@ import ConfirmacaoModal from "../ConfirmacaoModal";
 import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import Paginacao from '../Paginacao';
 import AsyncSelect from 'react-select/async';
+import Switch from "react-switch";
 
 const TipoAlerta = {
   1:"Temperatura",
   2:"Umidade"
 } 
+
+
+function getAlertaById (alertas, idAlerta) {
+  return alertas.filter(el => el.idAlerta == idAlerta)[0];
+}
+
+function getIndexAlertaById (alertas, idAlerta) {
+  for (let i = 0; i < alertas.length; i++) {
+    
+    if (alertas[i].idAlerta == idAlerta)
+      return i;  
+  }
+
+}
+
+
 
 export default class Alertas extends Component{
 
@@ -132,6 +149,32 @@ export default class Alertas extends Component{
       this.limparFiltros();
     }
 
+    this.toggleStatusAlerta = (e, alertas, idAlerta) => {
+
+      alertas = [...alertas];
+      alertas[getIndexAlertaById(alertas,idAlerta)].isHabilitado = e;
+
+      HttpService.salvarAlerta({
+        isHabilitado : e,
+      },
+      idAlerta
+      )
+      .then((response) => {
+        this.setState(prevState => ({
+          ...prevState,
+          alertas : alertas
+        }), () => {
+          this.obterLista();
+        });
+
+      })
+      .catch((error) => {
+        new HttpServiceHandler().validarExceptionHTTP(error.response, this);
+      }); 
+
+
+    }
+
     this.abrirConfirmacaoModal = () => {
       this.setState({
         confirmacaoModal : {
@@ -230,7 +273,7 @@ export default class Alertas extends Component{
       .then((response) => {
 
         let data = response.data;
-        let alerta = (this.state.alertas.filter(el => el.idAlerta == idAlerta))[0];
+        let alerta = getAlertaById(this.state.alertas,idAlerta);
         console.log(alerta);
         this.setState(prevState => ({
           ...prevState, 
@@ -529,7 +572,7 @@ export default class Alertas extends Component{
                     >  
                       <Form.Group className="inputAlerta" controlId="beneficiosForm.dadosPessoais">
                           <Form.Label>Nome</Form.Label>
-                          <Form.Control type="text" disabled="true" value={this.state.vlMax} name="nome" required autoComplete="false" maxLength="100"
+                          <Form.Control type="text" disabled={true} value={this.state.vlMax} name="nome" required autoComplete="false" maxLength="100"
                           />
                       </Form.Group>
                     </OverlayTrigger>
@@ -545,7 +588,7 @@ export default class Alertas extends Component{
                     >  
                       <Form.Group className="inputAlerta" controlId="beneficiosForm.dadosPessoais">
                           <Form.Label>NIS</Form.Label>
-                          <Form.Control type="text" disabled="true" value={this.state.vlMin} name="nis" required autoComplete="false" maxLength="11"
+                          <Form.Control type="text" disabled={true} value={this.state.vlMin} name="nis" required autoComplete="false" maxLength="11"
                           />
                       </Form.Group>
                     </OverlayTrigger>
@@ -614,10 +657,10 @@ export default class Alertas extends Component{
                         
                         <tr key={alerta.idAlerta}>
                         <td>{alerta.idAlerta}</td>
-                        <td>{(alerta.isHabilitado)?"Ligado":"Desligado"}</td>
+                        <td><Switch onChange={e => this.toggleStatusAlerta(e,this.state.alertas,alerta.idAlerta)} checked={this.state.alertas[getIndexAlertaById(this.state.alertas,alerta.idAlerta)].isHabilitado} /></td>
                         <td>{TipoAlerta[alerta.tipoAlerta]}</td>
                         <td>{(alerta.vlMax)? alerta.vlMax : "N/A" }</td>
-                        <td>{(alerta.vlMin)? alerta.vlMax : "N/A"}</td>
+                        <td>{(alerta.vlMin)? alerta.vlMin : "N/A"}</td>
                         <td>{(alerta.dtUltimoEnvio)? alerta.dtUltimoEnvio : "N/A" }</td>
                         <td style={{textAlign : "center"}}>
                             {/* <Button onClick={() => {this.visualizarAula(aula.idAula)}}>Visualizar Aula</Button> */}
