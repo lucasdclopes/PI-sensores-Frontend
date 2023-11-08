@@ -1,17 +1,12 @@
-.containerListaAlunosTurma {
+.containerAlertas {
   padding-top: 60px;
 }
 
-.btnSalvarTurma {
+.btnSalvarAlerta {
   background-color:rgb(2, 114, 11);
   margin-left: 20px;
 }
 
-.btnDeletarTurma {
+.btnDeletarAlerta {
   margin-left: 20px;
 }
-
-.inputNovaTurma {
-  margin-bottom: 20px;
-}
-

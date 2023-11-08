@@ -84,18 +84,20 @@ export default class HttpService{
     return response;
   }
 
-  static salvarAlerta =  (postData) => {
-    let url = urlBase + '/alerta';
-    let config = defaultConfig;
-    
-    return axios.post(url,postData,config);
-  }
-
   static salvarAlerta =  (postData,idAlerta) => {
-    let url = urlBase + '/alerta/' + idAlerta ;
+    let isUpdate = false
+    if (typeof idAlerta !== 'undefined' && idAlerta > 0) {
+      isUpdate = true;
+    }
+    let url = urlBase + ((isUpdate)?'/alerta/'+ idAlerta :"") ;
     let config = defaultConfig;
     
-    return axios.put(url,postData,config);
+    if (isUpdate) {
+      return axios.put(url,postData,config);
+    } else {
+      return axios.post(url,postData,config);
+    }
+      
   }
 
   static deletarAlerta = async (idAlerta) => {

@@ -20,7 +20,6 @@ const TipoAlerta = {
   2:"Umidade"
 } 
 
-
 function getAlertaById (alertas, idAlerta) {
   return alertas.filter(el => el.idAlerta == idAlerta)[0];
 }
@@ -34,7 +33,16 @@ function getIndexAlertaById (alertas, idAlerta) {
 
 }
 
-
+const dadosLimpos = {      
+  idAlerta : 0,
+  dtCriado : "",
+  destinatarios : "",
+  intervaloEsperaSegundos : 0,
+  isHabilitado : false, 
+  tipoAlerta : 0,  
+  vlMax: 0.00,
+  vlMin: 0.00
+}
 
 export default class Alertas extends Component{
 
@@ -42,14 +50,7 @@ export default class Alertas extends Component{
     super(props);
 
     this.state = {
-      idAlerta : 0,
-      dtCriado : "",
-      destinatarios : "",
-      intervaloEsperaSegundos : 0,
-      isHabilitado : false, 
-      tipoAlerta : 0,  
-      vlMax: 0.00,
-      vlMin: 0.00,
+      ...dadosLimpos,
       alertas : [],   
       filtros : {
         paginacaoRequest : {
@@ -62,6 +63,7 @@ export default class Alertas extends Component{
         }
       },
       isEdicao: false,
+      isNovo: false,
       erroModal : {
         mensagemErro : '',
         show : false,
@@ -150,7 +152,7 @@ export default class Alertas extends Component{
     }
 
     this.toggleStatusAlerta = (e, alertas, idAlerta) => {
-
+      console.log('toggleStatusAlerta');
       alertas = [...alertas];
       alertas[getIndexAlertaById(alertas,idAlerta)].isHabilitado = e;
 
@@ -169,7 +171,7 @@ export default class Alertas extends Component{
 
       })
       .catch((error) => {
-        new HttpServiceHandler().validarExceptionHTTP(error.response, this);
+        new HttpServiceHandler().validarExceptionHTTP(error, this);
       }); 
 
 
@@ -178,29 +180,30 @@ export default class Alertas extends Component{
     this.abrirConfirmacaoModal = () => {
       this.setState({
         confirmacaoModal : {
-          perguntaConfirmacao : 'Deseja realmente excluir o benefício? Isto NÃO poderá ser desfeito',
+          perguntaConfirmacao : 'Deseja realmente excluir o alerta? O histórico de envios deste alerta também será removido. Isto NÃO poderá ser desfeito.',
           show : true,
-          titulo : 'Deletar Benefício',
+          titulo : 'Remover alerta',
         }
       });
     }
 
     this.handleSimConfirmacaoModal = () => {
-      HttpService.deletarBeneficio(this.state.idBeneficio)
+      HttpService.deletarAlerta(this.state.idAlerta)
       .then((response) => {
         if (response) {
           this.setState({
             sucessoModal : {
-              mensagem : 'Benefício removido com sucesso.',
+              mensagem : 'Alerta excluído com sucesso.',
               show : true
             }
           });
 
         this.setState(prevState => ({
           ...prevState,
-          idBeneficio : 0,
+          idAlerta : 0,
           isEdicao : false,
-          beneficios : []
+          isNovo : false,
+          alertas : []
         }), () => {
           this.obterLista();
         });
@@ -208,7 +211,7 @@ export default class Alertas extends Component{
         }
       })
       .catch((error) => {
-        new HttpServiceHandler().validarExceptionHTTP(error.response, this);
+        new HttpServiceHandler().validarExceptionHTTP(error, this);
       })
       .finally(() => {
         this.closeConfirmacaoModal();
@@ -237,11 +240,28 @@ export default class Alertas extends Component{
       });
     }
 
-    this.novoBeneficio = () => {
-        this.setState({
-            idBeneficio : 0,
-            isEdicao: true
-          });
+    this.novoAlerta = () => {
+
+      this.setState(prevState => ({
+        ...prevState,
+        ...dadosLimpos,
+        isNovo: true,
+        isEdicao: false
+      }), () => {
+        this.obterLista();
+      });
+    }
+
+    this.cancelar = () => {
+
+      this.setState(prevState => ({
+        ...prevState,
+        ...dadosLimpos,
+        isNovo: false,
+        isEdicao: false
+      }), () => {
+        this.obterLista();
+      });
     }
 
     this.handlerSelecionarAluno = (e) => {
@@ -285,7 +305,8 @@ export default class Alertas extends Component{
           tipoAlerta : alerta.tipoAlerta,  
           vlMax : alerta.vlMax,
           vlMin : alerta.vlMin,
-          isEdicao: true
+          isEdicao: true,
+          isNovo: false
         }));
       })
       .catch((error) => {
@@ -294,21 +315,30 @@ export default class Alertas extends Component{
     }
 
 
-    this.salvarBeneficio = (e) => {
+    this.salvarAlerta = (e) => {
 
-      HttpService.salvarBeneficio({
-        idAluno : this.state.idAluno,
-        dtRecebimento : this.state.dtRecebimento,
-        responsavelRecebimento : this.state.responsavelRecebimento,
-        descBeneficio : this.state.descBeneficio
-      },
-      this.state.idBeneficio
-      )
+      let jsonRequest = {};
+      if (this.state.idAlerta == 0) {
+        jsonRequest = {
+          tipoAlerta: this.state.tipoAlerta,
+          intervaloEsperaSegundos: this.state.intervaloEsperaSegundos,
+          vlMax: this.state.vlMax,
+          vlMin: this.state.vlMin,
+          destinatarios: this.state.destinatarios
+        }
+      } else {
+        jsonRequest = {
+          tipoAlerta: this.state.tipoAlerta,
+          destinatarios: this.state.destinatarios
+        }
+      }
+
+      HttpService.salvarAlerta(jsonRequest,this.state.idAlerta)
       .then((response) => {
         if (response) {
           this.setState({
             sucessoModal : {
-              mensagem : 'Benefício cadastrado com sucesso.',
+              mensagem : 'Alerta criado com sucesso.',
               show : true
             }
           });
@@ -316,15 +346,7 @@ export default class Alertas extends Component{
 
       this.setState(prevState => ({
         ...prevState,
-        idBeneficio : 0,
-        nome : "",
-        nis : "",
-        dtRecebimento : "",
-        responsavelRecebimento : "",
-        idAluno : 0,
-        descBeneficio : "",
-        isEdicao : false,
-        beneficios : []
+        ...dadosLimpos
       }), () => {
         this.obterLista();
       });
@@ -333,10 +355,10 @@ export default class Alertas extends Component{
       .catch((error) => {
         new HttpServiceHandler().validarExceptionHTTP(error.response, this);
       }); 
-
-
     }
-    this.deletarBeneficio = (e) => {
+
+    
+    this.deletarAlerta = (e) => {
       this.abrirConfirmacaoModal();
     }
 
@@ -398,17 +420,9 @@ export default class Alertas extends Component{
       console.log('limpando dados');
       this.setState(prevState => ({
         ...prevState,
-        idAlerta : 0,
-        dtCriado : "",
-        destinatarios : "",
-        intervaloEsperaSegundos : 0,
-        isHabilitado : false, 
-        tipoAlerta : 0,  
-        vlMax: 0.00,
-        vlMin: 0.00
-      }  
-      )
-      );
+        ...dadosLimpos
+      }
+      ));
     }
 
     this.gerarFiltroBuscaAluno = (textoParaBusca) => {
@@ -515,7 +529,7 @@ export default class Alertas extends Component{
     return (
       <div>
 
-        <Container className="containerCadastroBeneficios" fluid>
+        <Container className="containerAlertas" fluid>
 
           <Row>
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 10, offset: 1}} lg={{span: 10, offset: 1}}>
@@ -567,12 +581,12 @@ export default class Alertas extends Component{
                       placement="bottom"
                       overlay={
                       <Tooltip id="tooltip-disabled">
-                      <strong>Este dado é obtido do cadastro. Para altera-lo é necessário alterar o cadastro do aluno</strong>
+                      <strong>Este não pode ser alterado após a criação do alerta. É necessário criar um novo alerta com novos valores</strong>
                       </Tooltip>}
                     >  
-                      <Form.Group className="inputAlerta" controlId="beneficiosForm.dadosPessoais">
-                          <Form.Label>Nome</Form.Label>
-                          <Form.Control type="text" disabled={true} value={this.state.vlMax} name="nome" required autoComplete="false" maxLength="100"
+                      <Form.Group className="inputAlerta" controlId="alertaForm.vlLimite">
+                          <Form.Label>Limite máximo</Form.Label>
+                          <Form.Control type="text" disabled={!this.state.isNovo} value={this.state.vlMax} name="vlMax" required autoComplete="false" maxLength="7"
                           />
                       </Form.Group>
                     </OverlayTrigger>
@@ -583,41 +597,51 @@ export default class Alertas extends Component{
                       placement="bottom"
                       overlay={
                       <Tooltip id="tooltip-disabled">
-                      <strong>Este dado é obtido do cadastro. Para altera-lo é necessário alterar o cadastro do aluno</strong>
+                      <strong>Este não pode ser alterado após a criação do alerta. É necessário criar um novo alerta com novos valores</strong>
                       </Tooltip>}
                     >  
-                      <Form.Group className="inputAlerta" controlId="beneficiosForm.dadosPessoais">
-                          <Form.Label>NIS</Form.Label>
-                          <Form.Control type="text" disabled={true} value={this.state.vlMin} name="nis" required autoComplete="false" maxLength="11"
+                      <Form.Group className="inputAlerta" controlId="alertaForm.vlLimite">
+                          <Form.Label>Limite Mínimo</Form.Label>
+                          <Form.Control type="text" disabled={!this.state.isNovo} value={this.state.vlMin} name="vlMin" required autoComplete="false" maxLength="7"
                           />
                       </Form.Group>
                     </OverlayTrigger>
                   </Col>
 
                   <Col xs={3}>
-                    <Form.Group className="inputAlerta" controlId="beneficiosForm.dtRecebimento">
-                        <Form.Label>Data do Recebimento</Form.Label>
-                        <Form.Control type="text" placeholder={"DD/MM/AAAA"} disabled={!this.state.isEdicao}  
-                        onChange={this.handleChange} value={this.state.vlMin} name="dtRecebimento" required autoComplete="false" maxLength="10"
-                        />  
+                    <Form.Group className="inputAlerta" controlId="alertaForm.tipoAlerta">
+                        <Form.Label>Sensor</Form.Label>
+                        <Form.Control type="text" placeholder={"Responsável"} disabled={!this.state.isNovo} onChange={this.handleChange} 
+                        value={this.state.tipoAlerta} name="tipoAlerta" required autoComplete="false" maxLength="30"
+                        />
                     </Form.Group>
                   </Col>
 
                   <Col xs={3}>
-                    <Form.Group className="inputAlerta" controlId="beneficiosForm.responsavelRecebimento">
-                        <Form.Label>Responsável pelo recebimento</Form.Label>
-                        <Form.Control type="text" placeholder={"Responsável"} disabled={!this.state.isEdicao} onChange={this.handleChange} 
-                        value={this.state.responsavelRecebimento} name="responsavelRecebimento" required autoComplete="false" maxLength="100"
-                        />
-                    </Form.Group>
+                    <OverlayTrigger
+                        key="bottom"
+                        placement="bottom"
+                        overlay={
+                        <Tooltip id="tooltip-disabled">
+                        <strong>Este campo é somente informativo, não há o que ser alterado</strong>
+                        </Tooltip>}
+                      >  
+                      <Form.Group className="inputAlerta" controlId="alertaForm.dtCriacao">
+                          <Form.Label>Data da criação</Form.Label>
+                          <Form.Control type="text" placeholder={"DD/MM/AAAA"}  disabled={true} 
+                          onChange={this.handleChange} value={(this.state.dtCriado)?this.state.dtCriado:""} name="dtCriacao" required autoComplete="false" maxLength="10"
+                          />  
+                      </Form.Group>
+                    </OverlayTrigger>
                   </Col>
                 </Row>
 
 
-                <Form.Group as={Col} className="inputAlerta" controlId="beneficiosForm.descBeneficio">
-                    <Form.Label>Detalhamento</Form.Label>
-                    <Form.Control as="textarea" rows={4} disabled={!this.state.isEdicao}  placeholder={"Descreva qual foi o benefício fornecido, máximo de 500 caractéres"} onChange={this.handleChange}
-                    value={this.state.destinatarios} name="descBeneficio" required autoComplete="false" maxLength="500"
+
+                <Form.Group as={Col} className="inputAlerta" controlId="alertaForm.emails">
+                    <Form.Label>E-mails para recebimento de alertas (separados por vírgula)</Form.Label>
+                    <Form.Control as="textarea" rows={4} disabled={!(this.state.isEdicao || this.state.isNovo)}  placeholder={"exemplo@outlook.com,outro_exemplo@gmail.com,mais.um.exemplo@uol.com.br"} onChange={this.handleChange}
+                    value={this.state.destinatarios} name="destinatarios" required autoComplete="false" maxLength="500"
                     />
                 </Form.Group>
                 
@@ -627,16 +651,16 @@ export default class Alertas extends Component{
 
           <Row className="mb-3">
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-              <Button onClick={this.novoBeneficio} disabled={this.state.isEdicao}>Novo</Button>
-              <Button variant="success" className="btnSalvarBeneficio" onClick={this.salvarBeneficio} disabled={!this.state.isEdicao}>Salvar</Button>
-              <Button variant="secondary" className="btnCancelar" onClick={() => {window.location = './cadastro-beneficios'}} disabled={!this.state.isEdicao}>Cancelar</Button>
-              <Button variant="danger" className="btnDeletarBeneficio" onClick={this.deletarBeneficio} disabled={this.state.idBeneficio == 0}>Deletar</Button>            
+              <Button onClick={this.novoAlerta} disabled={this.state.isEdicao || this.state.isNovo}>Novo</Button>
+              <Button variant="success" className="btnSalvarAlerta" onClick={this.salvarAlerta} disabled={!(this.state.isEdicao || this.state.isNovo )}>Salvar</Button>
+              <Button variant="secondary" className="btnCancelar" onClick={this.cancelar} disabled={!(this.state.isEdicao || this.state.isNovo )}>Cancelar</Button>
+              <Button variant="danger" className="btnDeletarAlerta" onClick={this.deletarAlerta} disabled={this.state.idAlerta == 0}>Deletar</Button>            
             </Col>
           </Row>
 
           <Row style={{marginTop : "60px"}}>
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-              <h4>Benefícios Cadastrados </h4>
+              <h4>Alertas Cadastrados </h4>
               <Table responsive="sm" striped bordered hover>
                 <thead>
                   <tr>
