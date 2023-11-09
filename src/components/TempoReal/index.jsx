@@ -15,7 +15,7 @@ import ReactApexChart from 'react-apexcharts'
 import ApexCharts from "apexcharts";
 
 
-const TEMPO_REFRESH = 8000;
+const TEMPO_REFRESH = 7000;
 const LIMITE_TABELA = 20;
 
 const Y_MIN_PADRAO = 24;
@@ -136,7 +136,7 @@ export default class TempoReal extends Component{
       dadosTabela: [],
       filtros : {
         paginacaoRequest : {
-          size: 1,
+          size: 2,
           page: 1
         },
         tempoReal : true
@@ -169,7 +169,6 @@ export default class TempoReal extends Component{
 
     this.obterLista = () => {
       //console.log('obterLista');
-      console.log(this.state.bla);
       let filtros = this.state.filtros;
       if (this.state.dadosTabela.length < 1){
         filtros = {
@@ -187,25 +186,27 @@ export default class TempoReal extends Component{
         }
         let responseData = response.data;
         //evitar IDs repetidos (o gráfico atualizou mais rápido que o servidor recebeu dados)
-        if (this.state.dadosTabela.filter((tabela) => tabela.idMedicao == responseData[0].idMedicao).length > 0) {
+        if (this.state.dadosTabela)
+          responseData = responseData.filter((resp) => !(this.state.dadosTabela.map(el => el.idMedicao).includes(resp.idMedicao)));
+        /*if (this.state.dadosTabela.filter((tabela) => tabela.idMedicao == responseData[0].idMedicao).length > 0) {
           return;
-        }
+        }*/
 
+        let responseDataTabela = responseData.slice();
         if (responseData.length > 1) //a ordem do servidor é diferente da necessária pro gráfico
           responseData.reverse();
-
 
         let series = this.state.series.slice();
         let seriesTemp = series[0].data;
         let seriesUmidade = series[1].data;
-        let dadosTabela = [...responseData,...this.state.dadosTabela];
+        let dadosTabela = [...responseDataTabela,...this.state.dadosTabela];
         
         if (dadosTabela.length > LIMITE_TABELA){
           dadosTabela.pop(); 
         }
         if (seriesTemp.length > 1000) {
           console.log('limpando');
-            series = [{
+            series = [{ 
               data: seriesTemp.slice(seriesTemp.length - 20, seriesTemp.length)
             },{
               data: seriesUmidade.slice(seriesUmidade.length - 20, seriesUmidade.length)
@@ -286,6 +287,7 @@ export default class TempoReal extends Component{
               <Table responsive="sm" striped bordered hover>
                 <thead>
                   <tr>
+                      <th>#</th>
                       <th>vlTemperatura</th>
                       <th>vlUmidade</th>
                       <th>dtMedicao</th>
@@ -298,6 +300,7 @@ export default class TempoReal extends Component{
                     return (
                         
                       <tr key={dado.idMedicao}>
+                        <td>{dado.idMedicao}</td>
                         <td>{dado.vlTemperatura}</td>
                         <td>{dado.vlUmidade}</td>
                         <td>{dado.dtMedicao}</td>
