@@ -16,6 +16,7 @@ import AsyncSelect from 'react-select/async';
 import Switch from "react-switch";
 
 const TipoAlerta = {
+  0:"Selecione",
   1:"Temperatura",
   2:"Umidade"
 } 
@@ -37,11 +38,11 @@ const dadosLimpos = {
   idAlerta : 0,
   dtCriado : "",
   destinatarios : "",
-  intervaloEsperaSegundos : 0,
+  intervaloEsperaSegundos : "",
   isHabilitado : false, 
   tipoAlerta : 0,  
-  vlMax: 0.00,
-  vlMin: 0.00
+  vlMax: '',
+  vlMin: ''
 }
 
 export default class Alertas extends Component{
@@ -148,7 +149,6 @@ export default class Alertas extends Component{
         let httpServiceHandler = new HttpServiceHandler();
         httpServiceHandler.validarExceptionHTTP(error,this);
       })
-      this.limparFiltros();
     }
 
     this.toggleStatusAlerta = (e, alertas, idAlerta) => {
@@ -200,10 +200,9 @@ export default class Alertas extends Component{
 
         this.setState(prevState => ({
           ...prevState,
-          idAlerta : 0,
+          ...dadosLimpos,
           isEdicao : false,
           isNovo : false,
-          alertas : []
         }), () => {
           this.obterLista();
         });
@@ -245,7 +244,9 @@ export default class Alertas extends Component{
       this.setState(prevState => ({
         ...prevState,
         ...dadosLimpos,
+        intervaloEsperaSegundos: 5,
         isNovo: true,
+        tipoAlerta: 1,
         isEdicao: false
       }), () => {
         this.obterLista();
@@ -264,28 +265,6 @@ export default class Alertas extends Component{
       });
     }
 
-    this.handlerSelecionarAluno = (e) => {
-
-      let idAluno = e.value;
-      console.log('buscando aluno');
-      HttpService.exibirAluno(idAluno)
-      .then((response) => {
-
-        let data = response.data;
-        this.setState(prevState => ({
-          ...prevState,  
-          idAluno : data.idAluno,
-          nome : data.nome,
-          nis : data.nis,
-          responsavelRecebimento : data.mae === null? null : data.mae.nome, //bota a mãe com default
-          isEdicao : true
-        }));
-      })
-      .catch((error) => {
-        new HttpServiceHandler().validarExceptionHTTP(error.response, this);
-      });
-    }
-
     this.exibirDadosAlerta = (idAlerta) => {
       console.log('buscando bene');
       this.limparDados();
@@ -300,7 +279,7 @@ export default class Alertas extends Component{
           idAlerta : alerta.idAlerta,
           dtCriado : alerta.dtCriado,
           destinatarios : alerta.destinatarios,
-          intervaloEsperaSegundos : alerta.intervaloEsperaSegundos,
+          intervaloEsperaSegundos : alerta.intervaloEsperaSegundos / 60,
           isHabilitado : alerta.isHabilitado, 
           tipoAlerta : alerta.tipoAlerta,  
           vlMax : alerta.vlMax,
@@ -311,7 +290,7 @@ export default class Alertas extends Component{
       })
       .catch((error) => {
         new HttpServiceHandler().validarExceptionHTTP(error, this);
-      });
+      }); 
     }
 
 
@@ -321,13 +300,14 @@ export default class Alertas extends Component{
       if (this.state.idAlerta == 0) {
         jsonRequest = {
           tipoAlerta: this.state.tipoAlerta,
-          intervaloEsperaSegundos: this.state.intervaloEsperaSegundos,
-          vlMax: this.state.vlMax,
-          vlMin: this.state.vlMin,
+          intervaloEsperaSegundos: this.state.intervaloEsperaSegundos * 60,
+          vlMax: this.state.vlMax == "" ? null : this.state.vlMax,
+          vlMin: this.state.vlMin == "" ? null : this.state.vlMin,
           destinatarios: this.state.destinatarios
         }
       } else {
         jsonRequest = {
+          intervaloEsperaSegundos: this.state.intervaloEsperaSegundos * 60,
           tipoAlerta: this.state.tipoAlerta,
           destinatarios: this.state.destinatarios
         }
@@ -338,7 +318,7 @@ export default class Alertas extends Component{
         if (response) {
           this.setState({
             sucessoModal : {
-              mensagem : 'Alerta criado com sucesso.',
+              mensagem : (this.state.idAlerta == 0)?'Alerta criado com sucesso.':'Alerta atualizado',
               show : true
             }
           });
@@ -346,7 +326,9 @@ export default class Alertas extends Component{
 
       this.setState(prevState => ({
         ...prevState,
-        ...dadosLimpos
+        ...dadosLimpos,
+        isEdicao: false,
+        isNovo: false
       }), () => {
         this.obterLista();
       });
@@ -362,20 +344,14 @@ export default class Alertas extends Component{
       this.abrirConfirmacaoModal();
     }
 
-    this.abrirTurmas = () => {
-      window.location = './lista-turmas?idAluno=' + this.state.idAluno;
-    }
-
     this.handleChange = (e) => {
-      /*
-      console.log(this.state.paramBusca);
+      
       console.log(e.target.type);
       console.log(e.target.value);
-      console.log('e.target.name ' + e.target.name);*/
+      console.log('e.target.name ' + e.target.name);
 
       const name = e.target.name;
-      const value =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+      const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
       this.setState(prevState => ({
         ...prevState,
         [name]: value
@@ -383,39 +359,42 @@ export default class Alertas extends Component{
     }
 
     this.handleChangeNumerico = (e) => {
-    /*  
-      console.log('num ' + this.state.paramBusca);
-      console.log('num ' + e.target.type);
-      console.log('num ' + e.target.value);
-      console.log('num e.target.name ' + e.target.name);*/
+    
+      //console.log('num ' + this.state.paramBusca);
+      //console.log('num ' + e.target.type);
+      //console.log('num ' + e.target.value);
+      //console.log('num e.target.name ' + e.target.name);
+      
+      let valueLen = ""+e.target.value.length;
+      const re = /^-?\d+(\.\d{1,2})?$/;
+      if (e.target.value === '' || (""+e.target.value).substring(valueLen-1,valueLen-0) == '.' || re.test(e.target.value)) {
+        console.log('noif');
+        const name = e.target.name;
+        const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+        this.setState({ 
+          [name]: value 
+        });
+     } 
+    }
+
+    this.handleChangeInteiro = (e) => {
+    
+      //console.log('num ' + this.state.paramBusca);
+      //console.log('num ' + e.target.type);
+      //console.log('num ' + e.target.value);
+      //console.log('num e.target.name ' + e.target.name);
 
       const re = /^[0-9\b]+$/;
       if (e.target.value === '' || re.test(e.target.value)) {
         console.log('noif');
         const name = e.target.name;
-        const value =
-        e.target.type === "checkbox" ? e.target.checked : e.target.value;
+        const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
         this.setState({ 
           [name]: value 
         });
      } 
     }
   
-    this.limparFiltros = (e) => {
-      console.log('limpando filtros');
-      this.setState(prevState => ({
-        ...prevState,
-        filtros : {
-          ...prevState.filtros,
-          idAlerta : 0,
-          dtRecebimentoInicio : null,
-          dtRecebimentoFim : null,
-          responsavelRecebimento : null
-          }
-        }
-      ));
-    }
-
     this.limparDados = (e) => {
       console.log('limpando dados');
       this.setState(prevState => ({
@@ -423,108 +402,13 @@ export default class Alertas extends Component{
         ...dadosLimpos
       }
       ));
-    }
-
-    this.gerarFiltroBuscaAluno = (textoParaBusca) => {
-
-      
-      let filtrosAluno = {
-        cpf : null,
-        nome : null,
-        nomePai : null,
-        nomeMae : null,
-        nis : null,
-        paginacaoRequest : {
-          size: 15,
-          page: 1
-        },
-        paginacaoResponse : {
-          quantidade : null,
-          hasProxima : null
-        }
-      };
-
-      console.log('paramBusca ' + this.state.paramBuscaAluno);
-      console.log('textoBusca ' + textoParaBusca);
-
-      if (textoParaBusca === null){
-        console.log('this.state.textoBusca === null ');
-        return filtrosAluno;
-      }
-
-      switch (this.state.paramBuscaAluno) {
-        case '1':
-          console.log('s1');
-          filtrosAluno.nome = textoParaBusca;
-          break;
-        case '2':
-          console.log('s2');
-          filtrosAluno.cpf = textoParaBusca;
-          break;
-        case '3':
-          console.log('s3');
-          filtrosAluno.nomeMae = textoParaBusca;
-          break;
-        case '4':
-          console.log('s4');
-          filtrosAluno.nomePai = textoParaBusca;
-          break;
-        case '5':
-          filtrosAluno.nis = textoParaBusca;
-          break;
-        default:
-          filtrosAluno.nome = textoParaBusca;
-        } 
-        return filtrosAluno;
-    }
-
-    this.getByValue = (map, searchValue) => {
-      for (var i=0; i < map.length; i++) {
-        if (map[i].value === searchValue) {
-            return map[i].name;
-        }
-      }
-    }
-    
-    this.radiosBuscaAluno = [
-      { name: 'Nome', value: '1' },
-      { name: 'CPF', value: '2' },
-      { name: 'Nome da Mãe', value: '3' },
-      { name: 'Nome do Pai', value: '4' },
-      { name: 'NIS', value: '5' },
-    ];
-
-    
-
+    }    
   }
 
 
   
 
   render(){
-
-    const promiseOptionsAlunoNome = (inputValue) => {
-      // new Promise((resolve) => {
-      //   setTimeout(() => {
-      //     resolve(filterColors(inputValue));
-      //   }, 1000);
-      // }
-
-      let listaAlunos = [];
-      let request = this.gerarFiltroBuscaAluno(inputValue);
-      request.paginacaoRequest.size = 30;
-
-      return HttpService.listarAlunos(request)      
-      .then((response) => {
-        response.data.forEach((aluno) => {
-          listaAlunos.push({
-            value : aluno.idAluno,
-            label : aluno.nome
-          });          
-        });
-        return listaAlunos;
-      });
-    };
 
     return (
       <div>
@@ -539,37 +423,9 @@ export default class Alertas extends Component{
 
           <Row>
             <Col xs={{span: 6, offset: 0}} sm={{span : 6, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-              <h3 className="Aluno">Alertas</h3>
+              <h3 className="alertas">Alertas</h3>
             </Col>
           </Row>
-
-          <Col style={{marginTop : "60px"}} xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-          <ButtonGroup>
-            {this.radiosBuscaAluno.map((radio, idx) => (
-              <ToggleButton
-                key={idx}
-                id={`radio-${idx}`}
-                type="radio"
-                variant={this.state.paramBuscaAluno === radio.value ? 'outline-primary' : 'outline-secondary'}
-                name="paramBuscaAluno"
-                value={radio.value}
-                checked={this.state.paramBuscaAluno === radio.value}
-                onChange={this.handleChange}
-              >
-                {radio.name}
-              </ToggleButton>
-            ))}
-          </ButtonGroup>
-          </Col>
-
-          <Row className="mb-3">
-            <Col style={{marginTop : "10px"}} xs={{span: 4, offset: 0}} sm={{span : 4, offset: 0}}  md={{span : 4, offset: 0}} lg={{span: 4, offset: 1}}>
-              <AsyncSelect placeholder={'Buscar aluno beneficiado usando o ' + this.getByValue(this.radiosBuscaAluno,this.state.paramBuscaAluno)}  
-              noOptionsMessage={() => {return "Nenhum aluno encontrado"}} onChange={this.handlerSelecionarAluno} loadOptions={promiseOptionsAlunoNome} 
-              />         
-            </Col>
-          </Row>
-
         
           <Row className="mb-3">
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
@@ -581,12 +437,17 @@ export default class Alertas extends Component{
                       placement="bottom"
                       overlay={
                       <Tooltip id="tooltip-disabled">
-                      <strong>Este não pode ser alterado após a criação do alerta. É necessário criar um novo alerta com novos valores</strong>
+                      <strong> {(this.state.isEdicao)?
+                        'Este valor não pode ser alterado após a criação do alerta. É necessário criar um novo alerta com novos valores'
+                        : 'Define um valor máximo que, caso ultrapassado, disparará o alerta de monitoramento'
+                      }
+                        </strong>
                       </Tooltip>}
                     >  
                       <Form.Group className="inputAlerta" controlId="alertaForm.vlLimite">
                           <Form.Label>Limite máximo</Form.Label>
-                          <Form.Control type="text" disabled={!this.state.isNovo} value={this.state.vlMax} name="vlMax" required autoComplete="false" maxLength="7"
+                          <Form.Control type="text" placeholder={"45"} disabled={!this.state.isNovo} value={this.state.vlMax} 
+                          onChange={this.handleChangeNumerico} name="vlMax" required autoComplete="false" maxLength="6"
                           />
                       </Form.Group>
                     </OverlayTrigger>
@@ -597,27 +458,59 @@ export default class Alertas extends Component{
                       placement="bottom"
                       overlay={
                       <Tooltip id="tooltip-disabled">
-                      <strong>Este não pode ser alterado após a criação do alerta. É necessário criar um novo alerta com novos valores</strong>
+                      <strong> {(this.state.isEdicao)?
+                        'Este valor não pode ser alterado após a criação do alerta. É necessário criar um novo alerta com novos valores'
+                        : 'Define um valor mínimo que, caso o valor mensurado seja menor, disparará o alerta de monitoramento'
+                      }
+                        </strong>
                       </Tooltip>}
                     >  
                       <Form.Group className="inputAlerta" controlId="alertaForm.vlLimite">
                           <Form.Label>Limite Mínimo</Form.Label>
-                          <Form.Control type="text" disabled={!this.state.isNovo} value={this.state.vlMin} name="vlMin" required autoComplete="false" maxLength="7"
+                          <Form.Control type="text" placeholder={"5"} disabled={!this.state.isNovo} value={this.state.vlMin} 
+                          onChange={this.handleChangeNumerico} name="vlMin" required autoComplete="false" maxLength="6"
                           />
                       </Form.Group>
                     </OverlayTrigger>
                   </Col>
 
-                  <Col xs={3}>
+                  <Col xs={6}>
+                    {(!this.state.isNovo)&&
+                      <OverlayTrigger
+                        key="bottom"
+                        placement="bottom"
+                        overlay={
+                        <Tooltip id="tooltip-disabled">
+                        <strong> {(this.state.isEdicao)?
+                          'Este valor não pode ser alterado após a criação do alerta. É necessário criar um novo alerta com novos valores'
+                          : 'Define qual sensor será utilizado para monitorar os valores. Temperatura, ou umidade'
+                        }
+                          </strong>
+                        </Tooltip>}
+                      >  
+                      <Form.Group className="inputAlerta" controlId="alertaForm.tipoAlerta">
+                          <Form.Label>Tipo de sensor</Form.Label>
+                          <Form.Control type="text" placeholder={"Temperatura ou umidade"} disabled={!this.state.isNovo} onChange={this.handleChange} 
+                          value={TipoAlerta[this.state.tipoAlerta]} name="tipoAlerta" required autoComplete="false" maxLength="30"
+                          />
+                      </Form.Group>
+                    </OverlayTrigger>}
+                    
+                    {(this.state.isNovo)&&
                     <Form.Group className="inputAlerta" controlId="alertaForm.tipoAlerta">
-                        <Form.Label>Sensor</Form.Label>
-                        <Form.Control type="text" placeholder={"Responsável"} disabled={!this.state.isNovo} onChange={this.handleChange} 
-                        value={this.state.tipoAlerta} name="tipoAlerta" required autoComplete="false" maxLength="30"
-                        />
-                    </Form.Group>
+                      <Form.Label>Tipo de sensor</Form.Label>
+                      <Form.Select aria-label="Floating label" onChange={this.handleChange} value={this.state.tipoAlerta} name="tipoAlerta" >
+                        <option value="1">Temperatura</option>
+                        <option value="2">Umidade</option>
+                      </Form.Select>
+                      
+                    </Form.Group>  
+                    }
                   </Col>
+                </Row>
+                <Row>
 
-                  <Col xs={3}>
+                  <Col xs={6}>
                     <OverlayTrigger
                         key="bottom"
                         placement="bottom"
@@ -634,16 +527,28 @@ export default class Alertas extends Component{
                       </Form.Group>
                     </OverlayTrigger>
                   </Col>
+                
+
+                
+                  <Col xs={6}>
+                    <Form.Group className="inputAlerta" controlId="alertaForm.freqAlerta">
+                        <Form.Label>Frequência máxima deste alerta por minuto</Form.Label>
+                        <Form.Control type="text" placeholder={"5 minutos"} disabled={!(this.state.isNovo || this.state.isEdicao )} value={this.state.intervaloEsperaSegundos} 
+                        onChange={this.handleChangeInteiro} name="intervaloEsperaSegundos" required autoComplete="false" maxLength="3"
+                        />
+                    </Form.Group>
+                  </Col>
                 </Row>
-
-
-
-                <Form.Group as={Col} className="inputAlerta" controlId="alertaForm.emails">
-                    <Form.Label>E-mails para recebimento de alertas (separados por vírgula)</Form.Label>
-                    <Form.Control as="textarea" rows={4} disabled={!(this.state.isEdicao || this.state.isNovo)}  placeholder={"exemplo@outlook.com,outro_exemplo@gmail.com,mais.um.exemplo@uol.com.br"} onChange={this.handleChange}
-                    value={this.state.destinatarios} name="destinatarios" required autoComplete="false" maxLength="500"
-                    />
-                </Form.Group>
+                <Row>
+                  <Col xs={12}>
+                    <Form.Group as={Col} className="inputAlerta" controlId="alertaForm.emails">
+                        <Form.Label>E-mails para recebimento de alertas (separados por vírgula)</Form.Label>
+                        <Form.Control as="textarea" rows={3} disabled={!(this.state.isEdicao || this.state.isNovo)}  placeholder={"exemplo@outlook.com,outro_exemplo@gmail.com,mais.um.exemplo@uol.com.br"} onChange={this.handleChange}
+                        value={this.state.destinatarios} name="destinatarios" required autoComplete="false" maxLength="500"
+                        />
+                    </Form.Group>
+                  </Col>
+                </Row>
                 
               </Form>
             </Col>
@@ -698,7 +603,7 @@ export default class Alertas extends Component{
               </Table>
             </Col>
           </Row>
-         { (this.state.alertas && this.state.alertas.size > 0) &&
+         { (this.state.alertas !== 'undefined' && this.state.alertas.length > 0) &&
           <Paginacao there={this} />
          }
             <Modal show={this.state.sucessoModal.show} onHide={this.closeSucessoModal}>
