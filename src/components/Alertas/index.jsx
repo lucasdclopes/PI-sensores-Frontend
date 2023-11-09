@@ -133,7 +133,7 @@ export default class Alertas extends Component{
         if (response){
           this.setState(prevState => ({
             ...prevState,
-            alertas : response.data,
+            alertas : response.status == 204 ? this.state.alertas : response.data,
             filtros : {
               ...prevState.filtros,
               paginacaoResponse : {
@@ -142,6 +142,7 @@ export default class Alertas extends Component{
               }
             }
           }));
+          
         }
       })
       .catch((error) => {
@@ -407,7 +408,7 @@ export default class Alertas extends Component{
         ...prevState,
         filtros : {
           ...prevState.filtros,
-          idAluno : null,
+          idAlerta : 0,
           dtRecebimentoInicio : null,
           dtRecebimentoFim : null,
           responsavelRecebimento : null
