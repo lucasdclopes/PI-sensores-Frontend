@@ -21,6 +21,8 @@ const LIMITE_TABELA = 20;
 const Y_MIN_PADRAO = 24;
 const Y_MAX_PADRAO = 40;
 
+var loop;
+
 function calcularMinY(min) {
   console.log('min ' + min);
 
@@ -326,12 +328,17 @@ export default class TempoReal extends Component{
     )
   }
 
+  
   componentDidMount() {
     this.obterLista();
-    window.setInterval(() => {
+    loop = window.setInterval(() => {
       this.obterLista();
       
     }, TEMPO_REFRESH)
+  }
+
+  componentWillUnmount(){
+    window.clearInterval(loop); 
   }
 
 

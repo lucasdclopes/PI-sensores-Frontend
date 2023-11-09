@@ -7,8 +7,6 @@ export default class ConfirmacaoModal extends Component {
   constructor(props){
     super(props);
 
-    console.log("propsaaaa -> ",props);
-
     this.handleClose = () => { 
       this.props.closeConfirmacaoModal();
     };
