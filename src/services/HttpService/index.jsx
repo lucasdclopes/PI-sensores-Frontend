@@ -89,7 +89,7 @@ export default class HttpService{
     if (typeof idAlerta !== 'undefined' && idAlerta > 0) {
       isUpdate = true;
     }
-    let url = urlBase + ((isUpdate)?'/alerta/'+ idAlerta :"") ;
+    let url = urlBase + '/alerta/'+ ((isUpdate)? ""+idAlerta :"") ;
     let config = defaultConfig;
     
     if (isUpdate) {

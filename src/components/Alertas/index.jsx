@@ -142,7 +142,6 @@ export default class Alertas extends Component{
               }
             }
           }));
-          
         }
       })
       .catch((error) => {
@@ -354,7 +353,7 @@ export default class Alertas extends Component{
 
       })
       .catch((error) => {
-        new HttpServiceHandler().validarExceptionHTTP(error.response, this);
+        new HttpServiceHandler().validarExceptionHTTP(error, this);
       }); 
     }
 
@@ -699,9 +698,9 @@ export default class Alertas extends Component{
               </Table>
             </Col>
           </Row>
-
+         { (this.state.alertas && this.state.alertas.size > 0) &&
           <Paginacao there={this} />
-
+         }
             <Modal show={this.state.sucessoModal.show} onHide={this.closeSucessoModal}>
               <Modal.Header closeButton>
                 <Modal.Title>Sucesso</Modal.Title>

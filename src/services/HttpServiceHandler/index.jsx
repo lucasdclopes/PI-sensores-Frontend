@@ -22,9 +22,15 @@ export default class HttpServiceHandler  extends Component {
       }
 
       if (response.status == 422){
-        response.data.forEach((erro) => {          
-          mensagemErro += (erro.campo ? erro.campo + ' - ' : '') + erro.mensagemErro + "; ";
-        })
+        
+        if (Array.isArray(response.data)){
+          response.data.forEach((erro) => {          
+            mensagemErro += (erro.campo ? erro.campo + ' - ' : '') + erro.mensagemErro + "; ";
+          })
+        } else {
+          mensagemErro = response.data.mensagem;
+        }
+
       }
       else {
         mensagemErro = response.data.mensagemErro;
