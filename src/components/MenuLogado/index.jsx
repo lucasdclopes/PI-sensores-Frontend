@@ -40,8 +40,7 @@ export default class MenuLogado extends Component {
               <Nav className="justify-content-end flex-grow-1 pe-3">
                 <Link className="linkMenu" to={"/tempo-real"}>Tempo Real</Link>
                 <Link className="linkMenu" to={"/alertas"}>Alertas</Link>
-                <Link className="linkMenu" to={"/co2"}>CO2</Link>
-                <Link className="linkMenu" to={"/pib-x-co2"}>PIB x CO2</Link>
+                <Link className="linkMenu" to={"/historico"}>Historico</Link>
                 <a className="linkMenu" style={{"cursor" : "pointer"}} onClick={this.logoff}>Sair</a>                
               </Nav>
             </Offcanvas.Body>

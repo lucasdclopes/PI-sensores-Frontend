@@ -12,7 +12,7 @@ export default class Paginacao extends Component {
 
     render(){
         return (
-            <Row>
+            <Row style={this.props.style}>
                 <Col xs={{span: 12, offset: 0}} sm={{span : 10, offset: 1}}  md={{span : 10, offset: 1}} lg={{span: 4, offset: 4}}>
                     <Pagination>
                         <Pagination.First onClick={() => {this.props.there.selecionarPagina(1)}} />

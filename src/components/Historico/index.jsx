@@ -27,22 +27,22 @@ export const options = {
   },
   stacked: false,
   scales: {
-    yCo2: {
+    yTemper: {
       type: 'linear',
       display: true,
       position: 'left',
       title: {
         display: true,
-        text: 'CO2'
+        text: 'Temperatura Cº'
       },
     },
-    yCo2PerCap: {
+    yUmid: {
       type: 'linear',
       display: true,
       position: 'right',
       title: {
         display: true,
-        text: 'CO2 Per Capita'
+        text: 'Umidade %'
       },
       // grid line settings
       grid: {
@@ -56,7 +56,7 @@ export const options = {
     },
     title: {
       display: true,
-      text: 'Dados de CO2',
+      text: 'Dados de monitoramento',
     },
   },
 };
@@ -83,9 +83,9 @@ const styles = {
   })
 };
 
-const default_itens_pagina = 50;
+const default_itens_pagina = 100;
 
-export default class Co2 extends Component{
+export default class Historico extends Component{
 
   constructor(props){
     super(props);
@@ -168,77 +168,44 @@ export default class Co2 extends Component{
 
     this.obterLista = () => {
       console.log('obterLista');
-      HttpService.listarCo2Paises(this.state.filtros)
+      HttpService.listarMedicoes(this.state.filtros)
       .then((response) => {
         if (response){
-          let respostaComNomePaises = response.data.map((item) => {
-            return {...item, nomePais: this.state.dadosPaises.find((el) => el.idPais == item.idPais).nomePais}
-          });
-
+          let responseData = response.data;
           let datasets = []
           let labels = []
           let cor = RgbHelper.getRandomColor();
-          if (this.state.filtros.idPaises){ 
-            this.state.filtros.idPaises.forEach((el) => {
-
-              let corAnterior = cor;
-              cor = RgbHelper.getRandomColor();
-              if (corAnterior == cor)
-                cor = RgbHelper.getRandomColor();
-
-              let dadosPais = respostaComNomePaises.filter((pais) => pais.idPais == el);
-              
-              if (labels.length == 0)
-                labels = dadosPais.map((el) => el.Ano);
-
-              if (dadosPais && dadosPais.length > 0){
-                let dadosDataset = {
-                  label: 'CO2 - ' + dadosPais[0].nomePais,
-                  backgroundColor: cor,
-                  borderColor: cor,
-                  data: dadosPais.map((elPais) => elPais.emissaoCo2),
-                  yAxisID: 'yCo2'
-                };
-                datasets.push(dadosDataset);
-
-                dadosDataset = {
-                  label: 'CO2 - Per Capita ' + dadosPais[0].nomePais,
-                  backgroundColor: cor,
-                  borderColor: cor,
-                  borderDash: [5, 5],
-                  data: dadosPais.map((elPais) => elPais.emissaoCo2PerCap),
-                  yAxisID: 'yCo2PerCap'
-                  }; 
-                datasets.push(dadosDataset);
-              }
-            });
+          
+          if (labels.length == 0){
+            labels = responseData.map((el) => el.dtMedicao);
           }
+
+          let dadosDataset = {
+            label: 'temperatura',
+            backgroundColor: '#E91E63',
+            borderColor: '#E91E63',
+            data: responseData.map((el) => el.vlTemperatura),
+            yAxisID: 'yTemper'
+          };
+          datasets.push(dadosDataset);
+
+          dadosDataset = {
+            label: 'u',
+            backgroundColor: '#008FFB',
+            borderColor: '#008FFB',
+            borderDash: [5, 5],
+            data: responseData.map((el) => el.vlUmidade),
+            yAxisID: 'yUmid'
+            }; 
+          datasets.push(dadosDataset);
 
           this.setState(prevState => ({
             ...prevState,
             data : {
-              //labels: respostaComNomePaises.map((el) => el.Ano),
               labels: labels,
-             /* datasets: [
-                {
-                  label: 'CO2',
-                  backgroundColor: 'rgba(194, 116, 161, 0.5)',
-                  borderColor: 'rgb(194, 116, 161)',
-                  data: respostaComNomePaises.map((el) => el.emissaoCo2),
-                  yAxisID: 'yCo2',
-                },
-                {
-                  label: 'CO2 Per Capita',
-                  backgroundColor: 'rgba(71, 225, 167, 0.5)',
-                  borderColor: 'rgb(71, 225, 167)',
-                  data: respostaComNomePaises.map((el) => el.emissaoCo2PerCap),
-                  yAxisID: 'yCo2PerCap',
-    
-                },
-              ]*/
               datasets: datasets
             },
-            dadosGrafico : respostaComNomePaises,
+            dadosGrafico : responseData,
             filtros : {
               ...prevState.filtros,
               paginacaoResponse : {
@@ -252,7 +219,7 @@ export default class Co2 extends Component{
       .catch((error) => {
         console.log(error);
         let httpServiceHandler = new HttpServiceHandler();
-        httpServiceHandler.validarExceptionHTTP(error.response,this);
+        httpServiceHandler.validarExceptionHTTP(error,this);
       })
       //this.limparFiltros();
     }
@@ -311,8 +278,8 @@ export default class Co2 extends Component{
     }
 
 
-    this.checkGerarGrafico = (idPaises) => {
-      return (idPaises) && (idPaises.length >= 1 && idPaises.length < 6);
+    this.checkGerarGrafico = (dadosGrafico) => {
+      return (dadosGrafico && Array.isArray(dadosGrafico) && dadosGrafico.length > 0);
     }
 
     this.handleChangeCheckedSelect = (e) => {
@@ -474,28 +441,33 @@ export default class Co2 extends Component{
           </Col>
           </Row>
 
-          <br></br>
-          <h5>Busque de um até cinco países para ver o gráfico </h5>
+          {
+            (!this.checkGerarGrafico(this.state.dadosGrafico)) &&
+            <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
+            <h5>Não há dados disponíveis para exibir o gráfico </h5>
+            </Col>
+          }
           </Col>
 
           {
-          (this.checkGerarGrafico(this.state.filtros.idPaises)) &&
-          <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-          <Line 
-            data={this.state.data} options={options} />
-            </Col>
-        }
-
-          <Row style={{marginTop : "60px"}}>
+            (this.checkGerarGrafico(this.state.dadosGrafico)) &&
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-              <h4>Dados de CO2 Cadastrados </h4>
+            <Line 
+              data={this.state.data} options={options} />
+              </Col>
+          }
+
+          <Paginacao style={{marginTop : "60px"}} there={this} />
+          <Row>
+            <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
+              <h4>Histórico de medições coletadas </h4>
               <Table responsive="sm" striped bordered hover>
                 <thead>
                   <tr>
-                      <th>Ano</th>
-                      <th>País</th>
-                      <th>Co2 - toneladas</th>
-                      <th>Co2 Per Capita - Toneladas</th>
+                    <th>#</th>
+                    <th>vlTemperatura</th>
+                    <th>vlUmidade</th>
+                    <th>dtMedicao</th>
                   </tr>
                 </thead>
 
@@ -504,11 +476,11 @@ export default class Co2 extends Component{
                     this.state.dadosGrafico.map((dado) => {
                     return (
                         
-                      <tr key={dado.Ano + dado.nomePais}>
-                        <td>{dado.Ano}</td>
-                        <td>{dado.nomePais}</td>
-                        <td>{dado.emissaoCo2}</td>
-                        <td>{dado.emissaoCo2PerCap}</td>
+                      <tr key={dado.idMedicao}>
+                        <td>{dado.idMedicao}</td>
+                        <td>{dado.dtMedicao}</td>
+                        <td>{dado.vlTemperatura}</td>
+                        <td>{dado.vlUmidade}</td>
                         </tr>
                     )
                     })
@@ -539,7 +511,7 @@ export default class Co2 extends Component{
 
   componentDidMount() {
       
-    this.obterPaises();
+    //this.obterPaises();
     this.obterLista();
     
   }
