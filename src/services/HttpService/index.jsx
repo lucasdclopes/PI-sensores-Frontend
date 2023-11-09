@@ -21,7 +21,7 @@ export default class HttpService{
   static queryPaginacao = (paginacao) => {
     return (!paginacao.size || !paginacao.page) ? 
       '' : 
-      'size=' + paginacao.size + '&page=' + (paginacao.page - 1); 
+      'size=' + paginacao.size + '&page=' + (paginacao.page); 
   } 
   static gerarParams = (arrParams) => {
     return (arrParams.length > 0) ? 
@@ -65,6 +65,7 @@ export default class HttpService{
     let queryParams = [];
 
     if (filtros.paginacaoRequest) {
+      
       queryParams.push(HttpService.queryPaginacao(
         filtros.paginacaoRequest
         ));

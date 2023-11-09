@@ -55,7 +55,7 @@ export default class Alertas extends Component{
       alertas : [],   
       filtros : {
         paginacaoRequest : {
-          size: 15,
+          size: 10,
           page: 1
         },
         paginacaoResponse : {
