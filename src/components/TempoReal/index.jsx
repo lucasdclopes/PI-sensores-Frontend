@@ -184,6 +184,9 @@ export default class TempoReal extends Component{
         if (!response){
           return;
         }
+        if (!response.data) {
+          return;
+        }
         let responseData = response.data;
         //evitar IDs repetidos (o gráfico atualizou mais rápido que o servidor recebeu dados)
         if (this.state.dadosTabela)
