@@ -24,7 +24,7 @@ export default class MenuLogado extends Component {
       <Navbar fixed="top" bg="light" expand={false}>
         <Container fluid>
           <Navbar.Brand href="#" id="tituloSistema">
-            Estatísticas
+            Monitoramento por sensores
           </Navbar.Brand>
           
           <Navbar.Toggle aria-controls="offcanvasNavbar" />
