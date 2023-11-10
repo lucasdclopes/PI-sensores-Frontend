@@ -14,12 +14,13 @@ import { default as ReactSelect } from "react-select";
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, PointElement, LinearScale, Title, CategoryScale, Legend } from 'chart.js';
 import { components } from "react-select";
+import DateHelper from "../../helpers/DateHelper";
 
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Legend, Title);
 
 
-export const options = {
+const options = {
   responsive: true,
   interaction: {
     mode: 'index',
@@ -92,9 +93,6 @@ export default class Historico extends Component{
 
     this.state = {
       data: null,
-      paisesSelecionados: null,
-      dadosPaisesSelect:[],
-      dadosPaises: [],
       dadosGrafico: [],
       filtros : {
         paginacaoRequest : {
@@ -105,9 +103,8 @@ export default class Historico extends Component{
           quantidade : null,
           hasProxima : null
         },
-        idPaises : [],
-        minAno : null,
-        maxAno : null
+        dtInicial : null,
+        dtFinal : null
       },
       erroModal : {
         mensagemErro : '',
@@ -167,110 +164,83 @@ export default class Historico extends Component{
     }
 
     this.obterLista = () => {
-      console.log('obterLista');
       HttpService.listarMedicoes(this.state.filtros)
       .then((response) => {
-        if (response){
-          let responseData = response.data;
-          let datasets = []
-          let labels = []
-          let cor = RgbHelper.getRandomColor();
-          
-          if (labels.length == 0){
-            labels = responseData.map((el) => el.dtMedicao);
-          }
-
-          let dadosDataset = {
-            label: 'temperatura',
-            backgroundColor: '#E91E63',
-            borderColor: '#E91E63',
-            data: responseData.map((el) => el.vlTemperatura),
-            yAxisID: 'yTemper'
-          };
-          datasets.push(dadosDataset);
-
-          dadosDataset = {
-            label: 'u',
-            backgroundColor: '#008FFB',
-            borderColor: '#008FFB',
-            borderDash: [5, 5],
-            data: responseData.map((el) => el.vlUmidade),
-            yAxisID: 'yUmid'
-            }; 
-          datasets.push(dadosDataset);
-
-          this.setState(prevState => ({
-            ...prevState,
-            data : {
-              labels: labels,
-              datasets: datasets
-            },
-            dadosGrafico : responseData,
-            filtros : {
-              ...prevState.filtros,
-              paginacaoResponse : {
-                quantidade : parseInt(response.headers['page-quantidade']),
-                hasProxima : response.headers['page-has-proxima'] === 'true' ? true : false
-              }
-            }
-          }));
+        if (!response)
+          return;
+        if (response.status == 204){
+          this.limparDados();
+          return;
         }
+        let responseData = response.data;
+        let datasets = []
+        let labels = []
+        
+        if (labels.length == 0){
+          labels = responseData.map((el) => el.dtMedicao);
+        }
+
+        let dadosDataset = {
+          label: 'temperatura',
+          backgroundColor: '#E91E63',
+          borderColor: '#E91E63',
+          data: responseData.map((el) => el.vlTemperatura),
+          yAxisID: 'yTemper'
+        };
+        datasets.push(dadosDataset);
+
+        dadosDataset = {
+          label: 'umidade',
+          backgroundColor: '#008FFB',
+          borderColor: '#008FFB',
+          borderDash: [5, 5],
+          data: responseData.map((el) => el.vlUmidade),
+          yAxisID: 'yUmid'
+          }; 
+        datasets.push(dadosDataset);
+
+        this.setState(prevState => ({
+          ...prevState,
+          data : {
+            labels: labels,
+            datasets: datasets
+          },
+          dadosGrafico : responseData,
+          filtros : {
+            ...prevState.filtros,
+            paginacaoResponse : {
+              quantidade : parseInt(response.headers['page-quantidade']),
+              hasProxima : response.headers['page-has-proxima'] === 'true' ? true : false
+            }
+          }
+        }));
+        
       })
       .catch((error) => {
-        console.log(error);
+        this.limparFiltros();
         let httpServiceHandler = new HttpServiceHandler();
         httpServiceHandler.validarExceptionHTTP(error,this);
       })
-      //this.limparFiltros();
-    }
-
-    this.obterPaises = () => {
-      console.log('obterPaises');
-      const filtroLocal = {paginacaoRequest:{size:15000,page:1}};
-      HttpService.listarPaises(filtroLocal)
-      .then((response) => {
-        if (response){
-          this.setState(prevState => ({
-            ...prevState,
-            dadosPaises : response.data,
-            dadosPaisesSelect : response.data.map((el) => { return {value:el.idPais, label:el.nomePais} } ),
-            filtros : {
-              ...prevState.filtros
-            }
-          }));
-        }
-      })
-      .catch((error) => {
-        console.log('obterPaisesErro');
-        let httpServiceHandler = new HttpServiceHandler();
-        httpServiceHandler.validarExceptionHTTP(error.response,this);
-      })
-      this.limparFiltros();
     }
 
 
-    this.buscarPais = (e) => {
+    this.buscarHistorico = (e) => {
 
-      
-      console.log('textoBusca ' + this.state.textoBusca);
-      console.log('filtros ' + this.state.filtros);
-
-      let minAnoBusca = this.state.minAnoBusca;
-      let maxAnoBusca = this.state.maxAnoBusca;
-      let idPaises = this.state.paisesSelecionados ? this.state.paisesSelecionados.map((el) => el.value) : null;
+      console.log('filtros ',this.state.filtros);
+      console.log(this.state.dtInicial);
+      let dtInicial = this.state.dtInicial;
+      let dtFinal = this.state.dtFinal;
 
       this.setState(prevState => ({
         ...prevState,
         filtros : {
           ...prevState.filtros,
-          idPaises : idPaises,
-          minAno : minAnoBusca ? minAnoBusca:null,
-          maxAno : maxAnoBusca ? maxAnoBusca:null,
           paginacaoRequest : {
             ...prevState.filtros.paginacaoRequest,
-            page : 1,
-            size : this.checkGerarGrafico(idPaises)? 1000000 : default_itens_pagina
-          }
+            page: 1
+          },
+          dtInicial : dtInicial ? DateHelper.stringToDateStringISO8601_inicioDia(dtInicial):null,
+          dtFinal : dtFinal ? DateHelper.stringToDateStringISO8601_fimDia(dtFinal):null
           }
         }
       ),() => {this.obterLista();}
@@ -306,40 +276,45 @@ export default class Historico extends Component{
       }));
     }
 
-    this.handleChangeNumerico = (e) => {
-
-      const re = /^[0-9\b]+$/;
-      if (e.target.value === '' || re.test(e.target.value)) {
-        console.log('noif');
+    this.handleChangeDate = (e) => {
+        //console.log('target',e.target.name);
+        //console.log('value',e.target.value);
         const name = e.target.name;
-        const value =
-        e.target.type === "checkbox" ? e.target.checked : e.target.value;
+        const value = e.target.value;
         this.setState({ 
           [name]: value 
         });
-      } 
     }
 
   
-    this.limparFiltros = (e) => {
+    this.limparFiltros = () => {
       console.log('limpando filtros');
       this.setState(prevState => ({
         ...prevState,
+        dtInicial: null,
+        dtFinal: null,
         filtros : {
-          ...prevState.filtros,
-          idPaises: [],
-          minAno: null,
-          maxAno: null
+          paginacaoRequest : {
+            size: default_itens_pagina,
+            page: 1
+          },
+          paginacaoResponse : {
+            quantidade : null,
+            hasProxima : null
+          },
+          dtInicial: null,
+          dtFinal: null
           }
         }
       ));
     }
 
-    this.limparDados = (e) => {
-      console.log('limpando dados');
+    this.limparDados = () => {
       this.setState(prevState => ({
         ...prevState,
-        dadosGrafico:[]
+        data: null,
+        dadosGrafico:[],
+
       }  
       )
       );
@@ -352,9 +327,9 @@ export default class Historico extends Component{
 
   render(){
     return (
-      <div>
+      <div style={{marginTop: "60px"}} >
 
-        <Container className="containerListaAlunosTurma" fluid>
+        <Container className="containerHistorico" fluid>
 
           <Row>
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 10, offset: 1}} lg={{span: 10, offset: 1}}>
@@ -364,7 +339,7 @@ export default class Historico extends Component{
 
           <Row>
             <Col xs={{span: 6, offset: 0}} sm={{span : 6, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
-              <h3 className="Aluno">Dados</h3>
+              <h3>Historico</h3>
             </Col>
           </Row>
 
@@ -375,38 +350,36 @@ export default class Historico extends Component{
             <Card.Header>Opções e Filtros</Card.Header>
             <Row className="mb-3">
 
-              <Col xs={2}>
-              <Form.Group className="ps-2" controlId="graficoForm.minAno">
-                <Form.Label>A partir do ano</Form.Label>
+              <Col xs={3}>
+              <Form.Group className="ps-2" controlId="graficoForm.minData">
+                <Form.Label>A partir da data</Form.Label>
                 <InputGroup >
                   <FormControl 
-                    placeholder="Exemplo: 1990"
                     aria-label="Ano mínimo"
                     aria-describedby="Buscar"
-                    name = "minAnoBusca"
-                    value = {this.minAnoBusca}
-                    onChange={this.handleChangeNumerico} 
-                    type="number"
+                    name = "dtInicial"
+                    value = {this.state.dtInicial}
+                    onChange={this.handleChangeDate} 
+                    type="date"
                   />
                 </InputGroup>
               </Form.Group>
               </Col>
-              <Col xs={2}>
-                <Form.Label>Até o ano</Form.Label>
+              <Col xs={3}>
+                <Form.Label>Até a data</Form.Label>
                 <InputGroup >
                   <FormControl 
-                    placeholder="Exemplo: 2020"
                     aria-label="Ano máximo"
                     aria-describedby="Buscar"
-                    name = "maxAnoBusca"
-                    value = {this.maxAnoBusca}
-                    onChange={this.handleChangeNumerico} 
-                    type="number"
+                    name = "dtFinal"
+                    value = {this.state.dtFinal}
+                    onChange={this.handleChangeDate} 
+                    type="date"
                   />
                 </InputGroup>
               </Col>
               <Col xs={4}>
-                <Form.Label>Selecione os países</Form.Label>
+                <Form.Label>Agrupar por</Form.Label>
                 <InputGroup >
                   <ReactSelect
                     options={this.state.dadosPaisesSelect}
@@ -433,7 +406,7 @@ export default class Historico extends Component{
             <InputGroup >
 
               <Button id="btnBuscar"
-              onClick={this.buscarPais}
+              onClick={this.buscarHistorico}
               >
                 Buscar
               </Button>
@@ -457,7 +430,12 @@ export default class Historico extends Component{
               </Col>
           }
 
-          <Paginacao style={{marginTop : "60px"}} there={this} />
+{
+          (
+            this.checkGerarGrafico(this.state.dadosGrafico)) &&
+            <Paginacao style={{marginTop : "60px"}} there={this} />
+          }
+          
           <Row>
             <Col xs={{span: 12, offset: 0}} sm={{span : 12, offset: 0}}  md={{span : 12, offset: 0}} lg={{span: 10, offset: 1}}>
               <h4>Histórico de medições coletadas </h4>
@@ -503,7 +481,10 @@ export default class Historico extends Component{
               </Modal>
             
             <ErroModal closeErroModal={this.closeErroModal} erroModal={this.state.erroModal}/>
-            <Paginacao there={this} />
+            {
+              (this.checkGerarGrafico(this.state.dadosGrafico)) &&
+              <Paginacao there={this} />
+            }
           </Container>
       </div>
     )

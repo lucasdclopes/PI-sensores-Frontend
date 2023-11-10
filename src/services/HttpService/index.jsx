@@ -29,8 +29,7 @@ export default class HttpService{
   }
 
   static listarMedicoes = async (filtros) => {
-    //console.log('filtros listarMedicoes',filtros);
-    //console.log('urlBase',urlBase);
+    //console.log(filtros);
     let url = urlBase + '/medicao';
     let queryParams = [];
 
