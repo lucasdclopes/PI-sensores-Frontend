@@ -94,6 +94,7 @@ export default class Historico extends Component{
     this.state = {
       data: null,
       dadosGrafico: [],
+      tipoAgrupamento : 1,
       filtros : {
         paginacaoRequest : {
           size: default_itens_pagina,
@@ -104,7 +105,8 @@ export default class Historico extends Component{
           hasProxima : null
         },
         dtInicial : null,
-        dtFinal : null
+        dtFinal : null,
+        tipoAgrupamento : 1
       },
       erroModal : {
         mensagemErro : '',
@@ -240,7 +242,8 @@ export default class Historico extends Component{
             page: 1
           },
           dtInicial : dtInicial ? DateHelper.stringToDateStringISO8601_inicioDia(dtInicial):null,
-          dtFinal : dtFinal ? DateHelper.stringToDateStringISO8601_fimDia(dtFinal):null
+          dtFinal : dtFinal ? DateHelper.stringToDateStringISO8601_fimDia(dtFinal):null,
+          tipoAgrupamento : this.state.tipoAgrupamento
           }
         }
       ),() => {this.obterLista();}
@@ -293,6 +296,7 @@ export default class Historico extends Component{
         ...prevState,
         dtInicial: null,
         dtFinal: null,
+        tipoAgrupamento: 1,
         filtros : {
           paginacaoRequest : {
             size: default_itens_pagina,
@@ -303,7 +307,8 @@ export default class Historico extends Component{
             hasProxima : null
           },
           dtInicial: null,
-          dtFinal: null
+          dtFinal: null,
+          tipoAgrupamento: 1,
           }
         }
       ));
@@ -381,20 +386,13 @@ export default class Historico extends Component{
               <Col xs={4}>
                 <Form.Label>Agrupar por</Form.Label>
                 <InputGroup >
-                  <ReactSelect
-                    options={this.state.dadosPaisesSelect}
-                    styles={styles}
-                    isMulti
-                    closeMenuOnSelect={false}
-                    hideSelectedOptions={false}
-                    components={{
-                      Option
-                    }}
-                    onChange={this.handleChangeCheckedSelect}
-                    allowSelectAll={true}
-                    value={this.state.paisesSelecionados}
-                    name = "selectPaises"
-                  />
+                <Form.Select aria-label="Floating label" onChange={this.handleChange} value={this.state.tipoAgrupamento} name="tipoAgrupamento" >
+                  <option value="0">Sem agrupar</option>
+                  <option value="1">Minuto</option>
+                  <option value="2">Hora</option>
+                  <option value="3">Dia</option>
+                  <option value="4">Semana</option>
+                </Form.Select>
                 </InputGroup>
               </Col>
             </Row>  

@@ -48,6 +48,9 @@ export default class HttpService{
     if (filtros.tempoReal) {
       queryParams.push('tempoReal=' + filtros.tempoReal);
     }
+    if (filtros.tipoAgrupamento && filtros.tipoAgrupamento > 0) {
+      queryParams.push('tipoAgrupamento=' + filtros.tipoAgrupamento);
+    }
     
 
     url += HttpService.gerarParams(queryParams);
