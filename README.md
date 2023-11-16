@@ -6,6 +6,8 @@ Este projeto foi criado utilizando o React [Create React App](https://github.com
 
 Este projeto é do PI-5 (Projeto Integrador) do curso de Engenheria de Computação da Univesp. O projeto consiste em um sistema de monitoramento de temperatura e umidade.
 
+Neste front-end temos um gráfico de monitoramento em tempo real utilizando a lib apexcharts. Também há um gráfico para apresentar dados de histórico, feito com o ChartJs. Finalmente, uma tela para configurar e-mails de alerta caso o sensor de temperatura e umidade atinja certos parâmetros.
+
 ## Requisitos
 
 Para executar este projeto você precisa também estar executando o backend deste sistema, que está localizado em 
