@@ -441,9 +441,9 @@ export default class Historico extends Component{
                 <thead>
                   <tr>
                     <th>#</th>
+                    <th>dtMedicao</th>
                     <th>vlTemperatura</th>
                     <th>vlUmidade</th>
-                    <th>dtMedicao</th>
                   </tr>
                 </thead>
 
