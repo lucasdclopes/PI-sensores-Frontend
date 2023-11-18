@@ -1,5 +1,7 @@
 # PI-sensores (Frontend)
 
+O projeto em execução pode ser acessado no endereço http://35.80.96.120/
+
 Este projeto foi criado utilizando o React [Create React App](https://github.com/facebook/create-react-app).
 
 ## Sobre
